@@ -11,16 +11,16 @@ const char* APETAG_MARK = "APETAGEX";
 #define EXITIFNONZERO(x) if ((x) != 0)ERROR("unexpected non-zero")
 #define EXITIFNEGATIVE(x) if ((x) < 0)ERROR("unexpected negative")
 
-int main (int argc,char* argv[]){
-	FILE *src,*dest;
+int main (int argc, char* argv[]){
+	FILE *src, *dest;
 
 	// check arguments and open file
 	if (argc <= 1) return 1;
-	EXITIFZERO (src = fopen (argv[1],"rb"));
+	EXITIFZERO (src = fopen (argv[1], "rb"));
 	if (argc <= 2){
 		dest = stdout;
 	} else {
-		EXITIFZERO (dest = fopen (argv[2],"wb"));
+		EXITIFZERO (dest = fopen (argv[2], "wb"));
 	}
 
 	// read & check apetag footer
@@ -30,7 +30,7 @@ int main (int argc,char* argv[]){
 	EXITIFNONZERO (memcmp (footer, APETAG_MARK, strlen (APETAG_MARK)));
 
 	// read tag body
-	size_t tagsize = *(size_t*) (footer+12); // FIXME: if you use BE CPU
+	size_t tagsize = *(size_t*) (footer + 12); // FIXME: if you use BE CPU
 	BYTE* tagbody;
 	EXITIFZERO (tagbody = malloc (tagsize));
 	EXITIFNEGATIVE (fseek (src, -tagsize, SEEK_END));
