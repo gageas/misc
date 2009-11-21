@@ -1,0 +1,7 @@
+catapetag
+
+	read apetag binary and output it
+
+	Usage: catapetag srcfile.ape [outputfile]
+
+	if outputfile is omitted, stdout will be used for output.
