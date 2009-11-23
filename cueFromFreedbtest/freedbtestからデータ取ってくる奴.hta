@@ -1,0 +1,489 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html lang="ja">
+<head>
+<script type="text/javascript">
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// イメージファイルのファイル名を指定します。
+// 空文字列("")を指定すると(アルバム名).wavが入ります。
+// 特別な指定をしたい場合は180行目あたりを直接書き換えてください。
+
+var CDIMAGE = "CDImage.wav"; 
+
+// cueシートを保存するパスを指定します。
+//  \ は \\ のように2つ重ねます。
+// 空文字列を指定するとカレントディレクトリに保存します。
+
+var PREFIX = "E:\\";
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+</script>
+<meta http-equiv="Content-Type" content="text/html;charset=euc-jp" />
+<title>read freedbtest.dyndns.org</title>
+<style type="text/css">
+body{
+  padding:0px;
+  background-attachment:fixed;
+  background-position:center;
+  background-repeat:repeat-y;
+  background-color:white;
+  color:black;
+  
+}
+iframe {height:100%;width:100%;display:none;}
+/*iframe {height:0;width:0;visibility:hidden;}*/
+table.layout{height:100%;width:100%; border:solid 1px;background-color:white;}
+table.cd td,table.cd th,{border:solid 1px silver;}
+table.cd{border-collapse:collapse;margin:10px;}
+td#head{height:0;}
+td#main{height:100%;}
+td#foot{height:40px;vertical-align:middle;}
+div#maindiv{overflow-y:scroll;height:100%;border:solid 1px silver;padding:5px;background-color:#EFE;}
+pre{border:solid 1px silver;padding:4px;margin:10px;}
+.keyword{background-color:#ffff66;padding:1px;}
+span.anchor{color:blue;text-decoration:underline;cursor:hand;} /*span*/
+span.button{color:black;text-decoration:none;cursor:hand;border:outset 2px #CFD;padding:0px 20px;margin:5px;border-width:2px;background-color:#DFE}
+span.pressed{background-color:#BFC;border-style:inset;}
+span.hover{background-color:#BFC !important;}
+a{color:blue;line-height:1.2em;}
+div.aa{
+ font-size:12pt;
+ line-height:1em;
+ padding:2px;}
+</style>
+<script type="text/javascript">
+<!--
+// Def. & prototype ext.
+var _DEBUG = false;
+if(navigator.plugins.length == 0)navigator.isIE=true;else navigator.isIE=false;
+String.prototype.template = function(){ //req. (nothing)
+	if(arguments.length==0)return this;
+	var tmp=this.split('{'+(arguments.length-1)+'}');
+	var newarg=[];
+	for(var i=0;i<arguments.length-1;i++){newarg.push(arguments[i])}
+	for(var i=0;i<tmp.length;i++){tmp[i] = arguments.callee.apply(tmp[i],newarg)}
+	return tmp.join(arguments[arguments.length-1].toString());
+}
+String.prototype.split2 = function(x){ //req. (nothing)
+	if(this.indexOf(x)==-1){
+		return [this,''];
+	}else{
+		return [this.substr(0,this.indexOf(x)),this.substr(this.indexOf(x)+x.length)];
+	}
+}
+String.prototype.replace = function(from,to){return this.split(from).join(to);} //req. (nothing)
+String.prototype.encodeURIChars = function(chars){ //req. string.replace
+	var tmp=this;
+	for(var i=0;i<chars.length;i++){
+		tmp=tmp.replace(chars.charAt(i),encodeURIComponent(chars.charAt(i)));
+	}
+	return tmp;
+}
+Number.prototype.padding = function(n){ //returns string , req. (nothing)
+	var tmp=this.toString();
+	while(tmp.length<n){
+		tmp='0'+tmp;
+	}
+	return tmp;
+}
+// Class Def.
+function ConnectionState(messtr,color){
+	this.messtr=messtr;
+	this.color=color?color:'#ffffff';
+	this.toString=function(){return this.messtr;}
+}
+function IFRAME_AJAX(id,props){
+	this.element = document.createElement('iframe');
+	this.page=0; // for multi page
+	this.id=id;
+	this.element.id=this.id;
+	this.callback=function(){};
+	this.status_interactive_cnt;
+	for(var pr in props){
+		this[pr]= props[pr];
+	}
+	if(navigator.isIE){
+		this.element.onreadystatechange=function(){
+			if(this.readyState=='interactive'){
+				window[this.id].status_interactive_cnt++;
+				if(window[this.id].status_interactive_cnt>5)message(IFRAME_AJAX.CONNECTION_STATE['error']);
+			}else{
+				window[this.id].status_interactive_cnt=0;
+				message(IFRAME_AJAX.CONNECTION_STATE[this.readyState]);
+			}
+			if(this.readyState=='complete'&&this.src!='')window[this.id].callback();
+		};
+	}else{
+		this.element.onload=function(){window[this.id].callback()};
+	}
+}
+IFRAME_AJAX.prototype.load = function(){this.element.src = this.url();message(IFRAME_AJAX.CONNECTION_STATE.connecting);}
+IFRAME_AJAX.prototype.init = function(){document.body.appendChild(this.element);}
+IFRAME_AJAX.prototype.setParam = function(prop,val){
+	this[prop]=val;
+	this.page=0;
+}
+IFRAME_AJAX.CONNECTION_STATE = {
+	'connecting' : new ConnectionState('セツゾクチュウ','#FFFF99') , //#FFFF99
+	'interactive' : new ConnectionState('チョットマッテネ','#FFFFBB') , //#FFFFBB
+	'loading' : new ConnectionState('ヨミコミチュウ','#FFFFBB') ,
+	'complete' : new ConnectionState('おｋ' , '#EEEEFF') , 
+	'error' : new ConnectionState('ｴﾗｰｯﾎﾟｲ','#FF9999')
+};
+
+function CD(){
+	this.TRACK=new Array();
+	this.DISCLENGTH=0; //sec
+	this.TITLE='';
+	this.GENRE='';
+	this.PERFORMER='';
+	this.YEAR=0;
+	this.DISCID='';
+	this.COMMENT='';
+	this.isVarious=false;
+	this.swap_title_artist=false;
+}
+
+CD.prototype.toHTML = function(){
+	var tbody=tagx('tbody',{},
+		tagx('tr',{},tagx('th',{'colSpan':2},'アーティスト'),tagx('td',{'colSpan':2},this.PERFORMER)),
+		tagx('tr',{},tagx('th',{'colSpan':2},'タイトル'),tagx('td',{'colSpan':2},this.TITLE)),
+		(this.YEAR?tagx('tr',{},tagx('th',{'colSpan':2},'年'),tagx('td',{'colSpan':2},this.YEAR)):null),
+		(this.GENRE?tagx('tr',{},tagx('th',{'colSpan':2},'ジャンル'),tagx('td',{'colSpan':2},this.GENRE)):null),
+		(this.COMMENT?tagx('tr',{},tagx('th',{'colSpan':2},'コメント'),tagx('td',{'colSpan':2},this.COMMENT)):null)
+	);
+	
+	for(var i=0;i<this.TRACK.length;i++){
+		var len = (((i+1)==this.TRACK.length)?this.DISCLENGTH*75-this.TRACK[i].INDEX01:this.TRACK[i+1].INDEX01-this.TRACK[i].INDEX01);
+		if(this.isVarious&&this.TRACK[i].TITLE.indexOf('/')>0){
+			var splitter=(this.TRACK[i].TITLE.indexOf(' / ')>0?' / ':'/');
+			tbody.appendChild(tagx('tr',{},
+				tagx('th',{},(i+1)),
+				tagx('td',{},CD.frameToMS(len)),
+				tagx('td',{},tagx('small',{},'アーティスト : '),this.TRACK[i].TITLE.split2(splitter)[this.swap_title_artist?1:0]),
+				tagx('td',{},tagx('small',{},'タイトル : '),this.TRACK[i].TITLE.split2(splitter)[this.swap_title_artist?0:1])
+			));
+		}else{
+			tbody.appendChild(tagx('tr',{},
+				tagx('th',{},(i+1)),
+				tagx('td',{},CD.frameToMS(len)),
+				tagx('td',{'colSpan':2},this.TRACK[i].TITLE)
+			));
+		}
+	}
+	return tagx('table',{'class':'cd'},tbody);
+}
+
+CD.prototype.toCue = function(){
+	var str='';
+	if(this.DISCID)str+='REM DISCID {0}\r'.template(this.DISCID.toUpperCase());
+	if(this.YEAR)str+='REM DATE {0}\r'.template(this.YEAR);
+	if(this.GENRE)str+='REM GENRE {0}\r'.template(this.GENRE);
+	if(this.COMMENT)str+='REM COMMENT "{0}"\r'.template(this.COMMENT);
+	if(this.PERFORMER)str+='PERFORMER "{0}"\r'.template(this.PERFORMER);
+	if(this.TITLE)str+='TITLE "{0}"\r'.template(this.TITLE);
+	str+='FILE "{0}" WAVE\r'.template( (CDIMAGE?CDIMAGE:this.TITLE.replace(/[\\:\*\?\"<>\|]/g,"_")+".wav") );
+	var l=this.TRACK.length;
+	for(var i=0;i<l;i++){
+		str+='  TRACK {0} AUDIO\r'.template((i+1).padding(2));
+		if(this.TRACK[i].TITLE){
+			if(this.isVarious&&this.TRACK[i].TITLE.indexOf('/')>0){
+				var splitter=(this.TRACK[i].TITLE.indexOf(' / ')>0?' / ':'/');
+				str+='    TITLE "{0}"\r    PERFORMER "{1}"\r'.template(
+					this.TRACK[i].TITLE.split2(splitter)[(this.swap_title_artist?0:1)],
+					this.TRACK[i].TITLE.split2(splitter)[(this.swap_title_artist?1:0)]);
+			}else{
+				str+='    TITLE "'+this.TRACK[i].TITLE+'"\r';
+			}
+		}
+		if(this.TRACK[i].INDEX00){str+='    INDEX 00 '+CD.frameToMSF(this.TRACK[i].INDEX00-150)+'\r';}
+		str+='    INDEX 01 '+CD.frameToMSF(this.TRACK[i].INDEX01-150)+'\r';
+	}
+	return str;
+}
+
+CD.prototype.parseCDDBString = function(str){
+	var lines = str.split('\r\n');
+	if(lines[0].indexOf('210')!=0)return false; //ステータスが210じゃないとき
+	for(var trs=0,l=lines.length,i=1;i<l;i++){
+		if(lines[i]=='.')break;
+		if(lines[i].charAt(0)=='#'){ //トラック時間情報
+			var frm=parseInt(lines[i].substr(2),10);
+			if(!isNaN(frm)){
+				this.TRACK[trs] = new Object();
+				this.TRACK[trs].INDEX01=parseInt(lines[i].substr(1),10);
+				trs++;
+			}else{
+				if(lines[i].indexOf('Disc length:')>0){this.DISCLENGTH=parseInt(lines[i].substr(lines[i].indexOf('Disc length:')+12),10);}
+			}
+			continue;
+		}
+		if(lines[i].indexOf('=')>0){
+			var eqr = lines[i].split2('=');
+			switch(eqr[0]){
+				case 'DISCID':
+					this.DISCID=eqr[1];
+					break;
+				case 'DTITLE':
+					this.PERFORMER=eqr[1].split2(' / ')[0];
+					this.TITLE=eqr[1].split2(' / ')[1];
+					if(this.PERFORMER=='Various')this.isVarious=true;
+					break;
+				case 'EXTD': //YEARなら
+					if(eqr[1].indexOf('YEAR:')>-1)this.YEAR = parseInt(eqr[1].substr(eqr[1].indexOf('YEAR:')+5));
+					break;
+				default: //トラックタイトルなら
+					if(eqr[0].indexOf('TTITLE')==0)this.TRACK[parseInt(eqr[0].substr(6,2),10)].TITLE = eqr[1];
+					break;
+			} // end of switch
+		} //end of if(lines[i].indexOf('=')>0)
+	} //end of "line" loop
+}
+
+CD.frameToMSF = function(frames){
+	var frm=frames%75; frames-=frm;
+	var sec=(frames/75)%60; frames-=sec*75;
+	var min=(frames/75/60);
+	return min.padding(2)+':'+sec.padding(2)+':'+frm.padding(2);
+}
+CD.frameToMS = function(frames){
+	var frm=frames%75; frames-=frm;
+	var sec=(frames/75)%60; frames-=sec*75;
+	var min=(frames/75/60);
+	return min.padding(2)+':'+sec.padding(2);
+}
+
+// Global objects
+var search = new IFRAME_AJAX('search',{
+	query:'',
+	pages:0,
+	results:0,
+	url:function(){
+		return 'http://freedbtest.dyndns.org/~cddb/namazu.cgi?query={0}&idxname=blues&idxname=classical&idxname=country&idxname=data&idxname=folk&idxname=jazz&idxname=misc&idxname=newage&idxname=reggae&idxname=rock&idxname=soundtrack&whence={1}'.template(this.query.encodeURIChars('%&? !&quot;#$&<>|~='),this.page*20);
+	},
+	callback:function(){
+		var ifrdoc=frame(this.id).document;
+		if(!ifrdoc.getElementsByTagName('ul')[0])return;
+		if(ifrdoc.getElementsByTagName('ul')[0].nextSibling.innerHTML=='検索式にマッチする文書はありませんでした。'){
+			this.results=this.pages=0;
+		}
+		this.results =parseInt(ifrdoc.body.innerHTML.substr(ifrdoc.body.innerHTML.indexOf("<!-- HIT -->")+12),10); //<!-- HIT -->67<!-- HIT -->
+		if(isNaN(this.results)||(this.results==0)){
+			message('見つからなかった');
+			message_foot('"{0}" {1}件'.template(this.query,this.results));
+			element('maindiv').innerHTML='';
+			return;
+		}
+		this.pages=Math.floor((this.results-1)/20)+1;
+		message_foot( '"{0}" {1}件中{2}-{3}'.template(this.query,this.results,this.page*20+1,(this.page*20+20)>this.results?this.results:(this.page*20+20)) );
+		var resultbody='';
+		var pageindex=tagx('small',{});
+		var start=0;
+		if(this.page>10){
+			start=this.page-10;
+			pageindex.appendChild(document.createTextNode('...'));
+		}
+		for(var i=start;(i<start+20)&&(i<this.pages);i++){
+			if(i==this.page){
+				pageindex.appendChild(tagx('span',{'class':'keyword'},'[ '+(i+1)+' ]'));
+			}else{
+				with({i:i})
+				pageindex.appendChild(tagx('span',{'class':'anchor','onclick':function(){search.page=i;search.load();}},'[ '+(i+1)+' ]'));
+			}
+		}
+		if(i!=this.pages)pageindex.appendChild(document.createTextNode('...'));
+		if(this.pages>=20){
+			var options=tag('option',{'value':0,'selected':'selected'},'More...');
+			for(var i=0;i<this.pages;i++){
+				options+=tag('option',{'value':i},'[ '+(i+1)+' ]');
+			}
+			pageindex+=tag('select',{'onchange':'search.page=this.value;search.load();'},options);
+		}
+//		pageindex=tag('small',{},pageindex);
+		var dts=ifrdoc.getElementsByTagName('dt');
+		var l=dts.length;
+		for(var i=0;i<l;i++){ //FIXME
+			var a=dts[i].getElementsByTagName('a')[0];
+			var cddbprop=a.href.split2('=')[1].split2('/');
+			resultbody+=tag('li',{},
+				tag('a',{
+					'href':'#',
+					'onclick':'cddbread.genre="{0}";cddbread.cddbid="{1}";cddbread.load();message_foot("[{0} - {1}]{2}");return false;'.
+						template(cddbprop[0],cddbprop[1],a.innerText.replace('"','\\"') )
+				},a.innerHTML)
+			);
+		}
+//		element('maindiv').innerHTML=pageindex+tag('ol',{'start':this.page*20+1},resultbody)+pageindex;
+		element('maindiv').innerHTML=tag('ol',{'start':this.page*20+1},resultbody);
+		element('maindiv').appendChild(pageindex);
+	}
+});
+var cddbread = new IFRAME_AJAX('cddbread',{
+	genre:'',
+	cddbid:'',
+	cd: new CD(),
+	url:function(){
+		return 'http://freedbtest.dyndns.org/~cddb/cddb.cgi?cmd=cddb+read+{0}+{1}&hello=username+hostname+A+A&proto=1'.
+			template(this.genre,this.cddbid);
+		return 'http://freedbtest.dyndns.org/dbread2.php?dbpath={0}/{1}&raw=true'.template(this.genre,this.cddbid);
+	},
+	callback:function(){
+		var ifrstr=frame(this.id).document.getElementsByTagName('pre')[0].innerHTML;
+		this.cd=new CD();
+		this.cd.parseCDDBString(ifrstr);
+		cddbread2.genre=this.genre;
+		cddbread2.cddbid=this.cddbid;
+		cueshow(this.cd);
+		cddbread2.load();
+	}
+});
+var cddbread2 = new IFRAME_AJAX('cddbread2',{
+	genre:'',
+	cddbid:'',
+	
+	url:function(){return "http://freedbtest.dyndns.org/dbread.php?dbpath={0}/{1}".template(this.genre,this.cddbid);},
+	callback:function(){
+		cddbread.cd.GENRE=frame(this.id).document.body.innerText.match(/Genre :([^\r\n]*)\r\n/)[1];
+		cddbread.cd.YEAR=frame(this.id).document.body.innerText.match(/Year :([^\r\n]*)\r\n/)[1];
+		cueshow(cddbread.cd);
+	}
+});
+
+// Utility and Wrapper Functions
+function element(x){return document.getElementById(x);}
+function frame(x){return document.frames(x);}
+function message(x,y){
+	element('message').innerHTML=tag('div',{'class':'aa','style':'float:right;'},(y?y:x)+' (・∀・)');
+	element('head').style.backgroundColor=x.color;
+}
+
+function message_foot(x){element('foot').innerHTML=x;}
+
+function tagx(name,attrs){
+	var ele=document.createElement(name);
+	if(attrs){
+		for(var i in attrs){
+			var val = ((typeof attrs[i])==(typeof function(){})?attrs[i]:attrs[i]+"");
+			switch(i){
+				case 'class':ele.className=val;break;
+				case 'style':ele.style.cssText=val;break;
+				default:ele[i]=val;break;
+			}
+		}
+	}
+	var value=Array.prototype.slice.call(arguments,2);
+	for(var i=0;i<value.length;i++){
+		(function(targetEle,appendEle){
+			if(appendEle instanceof Array){
+				for(var j=0;j<appendEle.length;j++){
+					arguments.callee(targetEle,appendEle[j]);
+				}
+			}else if(appendEle != null){
+				targetEle.appendChild(
+					(appendEle.nodeType
+						?appendEle
+						:document.createTextNode(appendEle+""))
+				);
+			}
+		})(ele,value[i]);
+	}
+	return ele;
+}
+function span_button(attrs){
+	var arg=Array.prototype.slice.call(arguments,0);
+	arg.unshift("span");
+	var ele=tagx.apply(null,arg);
+	ele.className+=" button";
+	with({self:ele}){
+		ele.attachEvent("onmouseover",function(){self.className=self.className+" hover";});
+		ele.attachEvent("onmouseout",function(){self.className=self.className.replace(/ *hover/,"");});
+		ele.attachEvent("onmousedown",function(){self.className=self.className+" pressed";});
+		ele.attachEvent("onmouseup",function(){self.className=self.className.replace(/ *pressed/,"");});
+	}
+	return ele;
+}
+
+function tag(name,attrs,value){ //req. string.replace
+	var atrstr='';
+	if(attrs)for(var i in attrs){atrstr+=' '+i+'="'+attrs[i].toString().replace('"','&quot;').replace('<','&lt;').replace('>','&gt;')+'"'}
+	return '<'+name+atrstr+'>'+value+'</'+name+'>';
+}
+
+
+
+var thiscd;
+function cueshow(argcd){
+	if(argcd)thiscd=argcd;
+	element('maindiv').innerHTML="";
+	var buttons = [
+		span_button({'onclick':function(){search.callback()}},'戻る'),
+		span_button({'class':(thiscd.isVarious?'pressed':''),'onclick':function(){thiscd.isVarious=!thiscd.isVarious;cueshow();}},'Various Artist'),
+		(thiscd.isVarious
+			? span_button({'class':(thiscd.swap_title_artist?'pressed':''),'onclick':function(){thiscd.swap_title_artist=!thiscd.swap_title_artist;cueshow();}},'タイトル/アーティストの入れ替え')
+			: null
+		),
+		span_button(
+			{
+				'onclick':function(){
+					if(confirm((PREFIX?PREFIX:"")+"\\"+thiscd.TITLE.replace(/[\:\?\"<>\|]/g,"_")+".cue"+" に保存しますか")){
+						save(thiscd.TITLE.replace(/[\\:\*\?\"<>\|]/g,"_"),document.getElementById("cueedit").innerText+"\r");
+					}
+				}
+			}
+			,'.CUEファイルに保存'
+		)
+	]
+	var header = tagx('div',{'style':'margin:4px;'},buttons);
+	element('maindiv').appendChild(header);
+	element('maindiv').appendChild( thiscd.toHTML() );
+	element('maindiv').appendChild(
+		tagx('div',{},
+			tagx('textarea',{'cols':'90','rows':'15','id':'cueedit'},thiscd.toCue()),
+			span_button({'class':'button','onclick':function(){if(confirm("コピーしますか"))clipboardData.setData("Text",document.getElementById("cueedit").innerText+"\n");}},'クリップボードにコピー'),
+			tagx('br')
+		)
+	)
+}
+
+function init(){
+	search.init();
+	cddbread2.init();
+	cddbread.init();
+	element('inputque').focus();
+}
+
+function save(fname,str){
+	try{
+		var filename = (PREFIX?PREFIX:"")+"\\"+fname+'.cue';
+		var fso = new ActiveXObject("Scripting.FileSystemObject");
+		var out = fso.CreateTextFile(filename, true);
+		out.Write(str);
+		out.Close();
+	}catch(e){
+		alert(e+"保存先のフォルダを確認してください");
+		return false;
+	}
+	alert("保存しました");
+	return true;
+}
+//-->
+</script>
+</head>
+<body onload="init()" scroll=no >
+<table class="layout"><tr><td id="head">
+<form action="#" onsubmit="if(this.inputque.value){search.setParam('query',this.inputque.value);search.load();}this.inputque.focus();return false;">
+<div style="float:left;text-align:left;">
+<input type="text" name="server" value="freedbtest.dyndns.org" id="server" style="display:none;">検索ワード = <input type="text" id="inputque" size="30" name="inputque">
+<input type="submit" value="検索">
+</div><span id="message">初期化</span>
+</td></tr>
+<tr><td id="main">
+<div id="maindiv"></div>
+</td></tr>
+<tr><td id="foot">
+</form>
+</td></tr>
+</table>
+</body></html>
