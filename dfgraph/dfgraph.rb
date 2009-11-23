@@ -15,10 +15,10 @@ end
 class DfGraph
 	$defaultWidth = 60
 	def DfGraph.start
-		df = `df`.split("\n").select{|x|x.match(/\/\S+/)}
+		df = `df`.split("\n").select{|x|x.match(/\/\S*/)}
 		datun = df.map{|x|
 			t=x.split(" ")
-			MountPoint.new(t.select{|x|x.match(/\/\S+/)}.last , t.select{|x|x.match(/\d+\%/)}.first)
+			MountPoint.new(t.select{|x|x.match(/\/\S*/)}.last , t.select{|x|x.match(/\d+\%/)}.first)
 		}
 		labelLen = datun.map{|x|x.mp.length}.max.to_i
 	
