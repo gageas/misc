@@ -1,0 +1,12 @@
+Command Queue
+
+	Read commands from STDIN, and execute them in parallel.
+
+	Usage : 
+		$ commandqueue.rb [ProcessCount]
+
+	Example :
+		$ echo -e "sleep 2\n sleep 3\n sleep 1" | commandqueue.rb 2
+
+		#0: -----2sec-------->--1sec-->
+		#1: -----3sec----------------->
