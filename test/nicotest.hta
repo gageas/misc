@@ -1,0 +1,105 @@
+<html>
+<head>
+<style type="text/css">
+* {margin:0px;padding:0px;}
+body{background-color:#ffe;}
+</style>
+<script type="text/javascript">
+navigator.isIE=(navigator.plugins.length==0?true:false);
+navigator.isOpera=(window.opera?true:false);
+function $(id){return document.getElementById(id);}
+function getIframeDocument(x){return ( navigator.isIE ? document.frames(x).document : $(x).contentDocument );}
+function getTextContent(ele){return ( (navigator.isIE||navigator.isOpera) ? ele.innerTEXT : ele.textContent );}
+/******************************************************************************
+//
+//  IframeAjaxクラス
+//      第1引数:名前 (String) 変数名と同じ
+//      第2引数:メソッド等 (Object) 
+//		ここにはurl,callbackメソッドなど含むオブジェクトを指定
+//		load()メソッドを実行
+//		callback関数
+//			第1引数:この文書のelementとしてのiframe
+//			第2引数:frameとしてのiframe
+//			第3引数:frameのdocumentとしてのiframe
+//
+// sample:
+//	var cddbread = new IframeAjax('cddbread',{
+//		baseurl:"http://freedbtest.dyndns.org/~cddb/cddb.cgi",
+//		url:function(){ //URL生成関数
+//			return baseurl+'?cmd=cddb+read+{0}+{1}&hello=username+hostname+A+A&proto=1'.Format(this.param.genre,this.param.cddbid);},
+//		callback:function(){ //コールバック
+//			var ifrdoc=frame(this.id).document;
+//			var ifrstr=ifrdoc.getElementsByTagName('pre')[0].innerHTML;
+//			alert(ifrstr);
+//		}
+//	});
+//	function init(){
+//		cddbread.init();
+//		cddbread.setParam('genre','foo');
+//		cddbread.setParam('cddbid',123456);
+//		cddbread.load();
+//	}
+******************************************************************************/
+function IframeAjax(id,props){
+	this.element = document.createElement('iframe');
+	this.page=0; // for multi page
+	this.id='__iframe_'+id;
+	this.element.id=this.id;
+	with({self:this}){
+		this.element.onreadystatechange=function(){
+			if(this.readyState=='interactive'){
+				self.status_interactive_cnt++;
+				if(self.status_interactive_cnt>5)message(IframeAjax.CONNECTION_STATE['error']);
+			}else{
+				self.status_interactive_cnt=0;
+				message(IframeAjax.CONNECTION_STATE[this.readyState]);
+			}
+			if(this.readyState=='complete'&&this.src!=''){
+				self.callback(self,( navigator.isIE ? document.frames(this.id) : $(this.id) ),getIframeDocument(this.id));
+			}
+		};
+//		(navigator.isIE?document.attachEvent:document.addEventListener)((navigator.isIE?'onLoad':'load'),function(){document.body.appendChild(self.element);},false);
+		setTimeout(function(){document.body.appendChild(self.element);},1);
+	}
+	this.callback=function(){};
+	this.status_interactive_cnt;
+	for(var pr in props)this[pr]= props[pr];
+}
+IframeAjax.prototype.load = function(){this.element.src = this.url();message(IframeAjax.CONNECTION_STATE.connecting);}
+IframeAjax.prototype.setParam = function(prop,val){ //パラメータを変更し、最初のページへ
+	this.param[prop]=val;
+	this.page=0;
+}
+IframeAjax.ConnectionState = function(messtr,color){ //ConnectionStateオブジェクトのコンストラクタ
+	this.messtr=messtr;
+	this.color=color?color:'#ffffff';
+	this.toString=function(){return this.messtr;}
+}
+IframeAjax.CONNECTION_STATE = {
+	'connecting' : new IframeAjax.ConnectionState('セツゾクチュウ','#FFFF99') , //#FFFF99
+	'interactive' : new IframeAjax.ConnectionState('チョットマッテネ','#FFFFBB') , //#FFFFBB
+	'loading' : new IframeAjax.ConnectionState('ヨミコミチュウ','#FFFFBB') ,
+	'complete' : new IframeAjax.ConnectionState('おｋ' , '#EEEEFF') , 
+	'error' : new IframeAjax.ConnectionState('ｴﾗｰｯﾎﾟｲ','#FF9999')
+};
+var myIframe = new IframeAjax('ifr',{
+	url:function(){return "http://www.nicovideo.jp/mylist/185364/1227692";},
+	callback:function(ele,frm,doc){
+		var e=doc.getElementsByTagName('embed')[0];
+		if(e)frm.scrollTo(e.offsetLeft+5,e.offsetTop+100);
+	}
+})
+function init(){
+	myIframe.element.style.width='940';
+	myIframe.element.style.height='512';
+	myIframe.load();
+}
+function message(){}
+
+</script>
+</head>
+<body onload="init()">
+<table><tr><td></td></tr>
+<tr><td id ="main"></td></tr></table>
+<!iframe id="ifr" onload="rschange(this)" src="http://localhost/" width=100% height=100%><!/iframe>
+</body></html>

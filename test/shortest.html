@@ -1,0 +1,125 @@
+<html>
+<!-- イベントハンドルなおした 2007.05.24 --?>
+<head><style type="text/css">td,th{border:solid 1px silver;}table{border-collapse:collapse;}</style>
+<script type="text/javascript">
+function $(id){return document.getElementById(id);}
+// 簡易文字列ふぉーまったー .Net Frameworkの複合書式設定とかJavaのMessageFormat風。 escape : { → {{    ,      } → }}
+String.Format = function(formatstr){
+	var arg=Array.prototype.slice.call(arguments,1),cal=arguments.callee;
+	if(!cal.regexp)cal.regexp=/(\{\{)|(\{(\d+)\})|(\}\})/g;
+	return formatstr.replace(cal.regexp,
+		function(){
+			switch(arguments[0]){
+				case '{{':return '{';break;
+				case '}}':return '}';break;
+				default:
+					if(typeof arg[arguments[3]]=='undefined') throw new Error('String.Format : Too short argument  '+formatstr);
+					else return arg[arguments[3]].toString();
+					break;
+			}
+		}
+	);
+}
+String.prototype.Format = function(){return String.Format.apply(null,[this].concat(Array.prototype.slice.call(arguments)));} //インスタンスメソッド
+
+function Link(destNode,weight){ //onewayリンククラス
+	this.destNode=destNode;
+	this.weight=weight;
+}
+
+function Node(id){ //ノードクラス
+	this.id=id;
+	this.route=null;
+	this.distance=null;
+	this.links=[]; //出て行くリンクの配列
+}
+Node.prototype.toString=function(){return this.id;}
+Node.prototype.toRowString=function(){
+	return String.Format( '<tr><th>{0}</th><td>{1}</td><td>{2}</td></tr>',
+		this,(this.distance!=null?this.distance:'-'),(this.route?this.route.join('→'):'到達不能') );
+}
+Node.prototype.checkPassed=function(tNode){ //thisのノードへ至る経路が既にtNodeを通過していればtrueを返す
+	if(this.route){
+		for(var j=0;j<this.route.length;j++){
+			if(tNode===this.route[j])return true;
+		}
+	}
+	return false;
+}
+Node.prototype.updateDistance=function(){
+	for(var i=0;i<this.links.length;i++){
+		var dnode=this.links[i].destNode;
+		if(this.checkPassed(dnode))continue; //ループになってしまうときcontinue
+		var tDist=this.distance+this.links[i].weight;
+		if( ((dnode.distance>tDist))||(dnode.distance==null) ){
+			dnode.distance=tDist;
+			dnode.route=this.route.concat(dnode);
+			dnode.updateDistance();
+		}
+	}
+}
+
+function Graph(){ //グラフクラス
+	this.nodes=[];
+	for(var i=0;i<arguments.length;i++){
+		this.nodes[this.nodes.length]=new Node(arguments[i]);
+	}
+}
+Graph.prototype.getNodeById = function(id){
+	for(var i=0;i<this.nodes.length;i++){
+		if(this.nodes[i].id==id)return this.nodes[i];
+	}
+}
+Graph.prototype.solve=function(startNode){
+	for(var i=0;i<this.nodes.length;i++){
+		this.nodes[i].route=this.nodes[i].distance=null;
+	}
+	if(!startNode)startNode=this.nodes[0];
+	startNode.distance=0;
+	startNode.route=[startNode];
+	startNode.updateDistance();
+}
+Graph.prototype.toTABLEString=function(){
+	var arr=[];
+	for(var i=0;i<this.nodes.length;i++){
+		arr[i]=this.nodes[i].toRowString();
+	}
+	return '<table><tr><th>ノード</th><th>距離</th><th>経路</th></tr>'+arr.join('')+'</table>';
+}
+
+Graph.prototype.toSELECTString=function(id){
+	var arr=[];
+	for(var i=0;i<this.nodes.length;i++){
+		arr[i]=String.Format('<option value="{0}">{0}</option>',this.nodes[i].id);
+	}
+	return String.Format('<select id="{0}">{1}</select>',id,arr.join(''));
+}
+
+var myGraph = new Graph('A','B','C','D','E','F','G','H','I','J');
+
+function main(){
+	with(myGraph){
+		getNodeById('A').links=[new Link(getNodeById('C'),15), new Link(getNodeById('I'), 2)];
+		getNodeById('B').links=[new Link(getNodeById('J'), 3)];
+		getNodeById('C').links=[new Link(getNodeById('D'), 5), new Link(getNodeById('E'),10)];
+		getNodeById('D').links=[new Link(getNodeById('J'),20)];
+		getNodeById('E').links=[new Link(getNodeById('F'), 8), new Link(getNodeById('G'), 4)];
+		getNodeById('F').links=[new Link(getNodeById('H'),-3), new Link(getNodeById('B'), 2)];
+		getNodeById('G').links=[new Link(getNodeById('I'), 4)];
+		getNodeById('H').links=[new Link(getNodeById('I'),-4)];
+		getNodeById('I').links=[new Link(getNodeById('J'),50)];
+		solve();
+		$('out').innerHTML=toTABLEString();
+		$('sel').innerHTML=toSELECTString('start');
+//		try{
+		if(window.addEventListener){
+			$('start').addEventListener('change',function(){myGraph.solve(myGraph.getNodeById(this.value));$('out').innerHTML=myGraph.toTABLEString();},false);
+		}else{
+			$('start').attachEvent('onchange',function(){myGraph.solve(myGraph.getNodeById($('start').value));$('out').innerHTML=myGraph.toTABLEString();});
+		}
+	}
+}
+</script>
+</head>
+<body onload="main()"><div id='out'></div>スタート地点：<span id='sel'></span></body>
+</html>

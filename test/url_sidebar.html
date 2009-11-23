@@ -1,0 +1,14 @@
+<html>
+<head>
+<style type="text/css">
+* {margin:0px;padding:0px;border:0px;}
+input{border:solid 1px silver;}
+table{width:100%;height:100%;border-collapse:collapse;}
+tr#tr_url{height:0px;}
+tr#tr_body{height:100%;}
+</style>
+</head>
+<body scroll="no"><form onSubmit="document.getElementById('ifr').src=document.getElementById('inp').value;return false;"><table><tr id="tr_url"><td>URL<input size=40 id="inp"><input type="submit" value="load"></td></tr>
+<tr id="tr_body"><td><iframe src="http://www.nicovideo.jp/watch/sm532056" id="ifr" width="100%" height="100%" onload="alert(ifronload);"></iframe></td></tr></table></form>
+</body>
+</html>
